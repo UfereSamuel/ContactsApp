@@ -2,11 +2,14 @@ package com.ighub.sqliteclass.dbfiles;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+
+import java.util.ArrayList;
 
 public class DatabaseHandler extends SQLiteOpenHelper {
     public static final int DATABASE_VERSION = 1;
@@ -27,9 +30,9 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         String CREATE_CONTACTS_TABLE = "CREATE TABLE " + TABLE_NAME + "("
                 + COLUMN_ID + " INTEGER PRIMARY KEY, "
                 + COLUMN_FIRSTNAME + " TEXT, "
-                + COLUMN_LASTNAME + "TEXT, "
-                + COLUMN_PHONE + "TEXT, "
-                + COLUMN_EMAIL + "TEXT " + ")";
+                + COLUMN_LASTNAME + " TEXT, "
+                + COLUMN_PHONE + " TEXT, "
+                + COLUMN_EMAIL + " TEXT " + ")";
 
         db.execSQL(CREATE_CONTACTS_TABLE);
 
@@ -44,7 +47,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
     }
 
-    public void addContact(ContactModel model) {
+    public long addContact(ContactModel model) {
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues values = new ContentValues();
@@ -54,7 +57,29 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         values.put(COLUMN_EMAIL, model.getEmail());
         values.put(COLUMN_PHONE, model.getPhone());
 
-        db.insert(TABLE_NAME, null, values);
+        long result = db.insert(TABLE_NAME, null, values);
+
         db.close();
+        return result;
+    }
+
+    public ArrayList<ContactModel> listContact() {
+        String query = "SELECT * FROM " + TABLE_NAME;
+        SQLiteDatabase database = this.getReadableDatabase();
+        ArrayList<ContactModel> storeContacts = new ArrayList<>();
+        Cursor cursor = database.rawQuery(query, null);
+        if (cursor.moveToFirst()) {
+            do {
+                String id = cursor.getString(cursor.getColumnIndex(COLUMN_ID));
+                String fname = cursor.getString(cursor.getColumnIndex(COLUMN_FIRSTNAME));
+                String lname = cursor.getString(cursor.getColumnIndex(COLUMN_LASTNAME));
+                String email = cursor.getString(cursor.getColumnIndex(COLUMN_EMAIL));
+                String phone = cursor.getString(cursor.getColumnIndex(COLUMN_PHONE));
+                ContactModel model = new ContactModel(Integer.parseInt(id), fname, lname, email, phone);
+                storeContacts.add(model);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return storeContacts;
     }
 }
